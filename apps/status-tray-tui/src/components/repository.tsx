@@ -14,7 +14,10 @@ export const Repository = ({ owner, repo }: RepositoryProps) => {
 
   const load = async () => {
     const runs = await service.getWorkflowRunsForRepo(owner, repo);
-    setWorkflows(runs);
+    setWorkflows((oldRuns) => {
+
+      return runs
+    });
   };
 
   useEffect(() => {
@@ -32,10 +35,12 @@ export const Repository = ({ owner, repo }: RepositoryProps) => {
       <box gap={1} title={'Runs'}>
         {workflows.map((run: Workflow) => (
           <RepositoryAction
+            key={run.id}
             status={run.status}
             title={run.title}
             description={run.description}
-            branch={'master'}
+            createdAt={run.createdAt}
+            branch={run.branch}
             actor={'faebeee'}
           />
         ))}

@@ -7,5 +7,6 @@ export type Workflow = {
   uri?: string;
   createdAt: string;
   updatedAt: string;
-  status: WorkflowStatus
+  status: WorkflowStatus;
+  branch?: string;
 }

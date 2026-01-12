@@ -43,7 +43,7 @@ export class GithubWorkflowService {
       return WorkflowStatus.running;
     }
 
-    if (['completed', 'cancelled'].includes(run.conclusion as WorkflowConclusion)) {
+    if (['completed', 'cancelled', 'success'].includes(run.conclusion as WorkflowConclusion)) {
       return WorkflowStatus.success;
     }
 
@@ -68,10 +68,8 @@ export class GithubWorkflowService {
           createdAt: run.created_at,
           updatedAt: run.updated_at,
           status: this.getStatusForWorkflow(run),
-          // actor: {
-          //   name: run.triggering_actor?.login ?? 'K / A',
-          //   avatar: run.triggering_actor?.avatar_url ?? 'K / A'
-          // }
+          branch: run.head_branch,
+          actor: run.triggering_actor?.login ?? run.triggering_actor?.email ?? 'K/A'
         };
       }
     );

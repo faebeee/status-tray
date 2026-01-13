@@ -1,38 +1,28 @@
 import { createCliRenderer, KeyEvent } from '@opentui/core';
-import { createRoot } from '@opentui/react';
-import { getSettings } from '@repo/backend/lib/settings/get-settings.ts';
-import type { TuiSettings } from '@repo/backend/lib/types/tui-settings.ts';
-import { useEffect, useMemo, useState } from 'react';
+import { createRoot, useKeyboard } from '@opentui/react';
+import { useState } from 'react';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import { ViewContext } from './context/view-context.ts';
 import { Dashboard } from './views/dashboard.tsx';
-import { Settings } from './views/settings.tsx';
-
-function App() {
-  const [settings, setSettings] = useState<TuiSettings | null>(null);
-  const needsSetup = useMemo(() => {
-    if (!settings) {
-      return false;
-    }
-    return Object.values(settings).every((entry) => !entry);
-  }, [settings]);
-
-  useEffect(() => {
-    getSettings()
-      .then((settings) => {
-        setSettings(settings);
-      });
-  }, []);
-
-  if (needsSetup === null) {
-    return null;
-  }
-
-  return (<>
-    {needsSetup && settings && <Settings settings={settings}/>}
-    {!needsSetup && <Dashboard/>}
-  </>);
-}
+import { Minimal } from './views/minimal.tsx';
 
 const renderer = await createCliRenderer();
+
+function App({ gitRepos, vercelProjects, minimal }: { minimal: boolean, gitRepos: string[], vercelProjects: string[] }) {
+  const [showOnlyFailed, setShowOnlyFailed] = useState(false);
+
+  useKeyboard((key) => {
+    if (key.name === "x") {
+      setShowOnlyFailed(!showOnlyFailed);
+    }
+  });
+
+  return (<ViewContext.Provider value={{ showOnlyFailed, toggle: () => setShowOnlyFailed(!showOnlyFailed) }}>
+    {minimal ? <Minimal gitRepos={gitRepos} vercelProjects={vercelProjects} />
+      : <Dashboard gitRepos={gitRepos} vercelProjects={vercelProjects} />}
+  </ViewContext.Provider>);
+}
 
 renderer.keyInput.on('keypress', (key: KeyEvent) => {
   if (key.ctrl && key.name === 'l') {
@@ -40,4 +30,8 @@ renderer.keyInput.on('keypress', (key: KeyEvent) => {
   }
 });
 
-createRoot(renderer).render(<App/>);
+const argv = yargs(hideBin(process.argv)).parse()
+const vercelProjects = argv.vercel ? (Array.isArray(argv.vercel) ? argv.vercel : [argv.vercel]) : [];
+const minimal = argv.minimal ?? false;
+
+createRoot(renderer).render(<App minimal={minimal} gitRepos={argv.git ?? []} vercelProjects={vercelProjects} />);

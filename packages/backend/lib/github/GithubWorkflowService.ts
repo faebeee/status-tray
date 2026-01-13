@@ -24,7 +24,7 @@ export class GithubWorkflowService {
   private api: OctokitService;
 
   constructor() {
-    this.api = OctokitService.getInstance();
+    this.api = new OctokitService();
   }
 
   private async getListOfWorkflows(owner: string, repo: string): Promise<RepoWorkflowRun[]> {
@@ -50,11 +50,17 @@ export class GithubWorkflowService {
     if (['timed_out', 'skipped', 'failure', 'action_required'].includes(run.conclusion as WorkflowConclusion)) {
       return WorkflowStatus.failure;
     }
+
+    //throw new Error(run.conclusion);
+    return WorkflowStatus.unknown;
   }
 
   public async getWorkflowRunsForRepo(owner: string, repo: string): Promise<Workflow[]> {
     const result = await this.getListOfWorkflows(owner, repo);
-    const latestCommitId = result[0].head_commit!.id;
+    const latestCommitId = result[0].head_commit?.id;
+    if (!latestCommitId) {
+      return [];
+    }
     const runsForCommit = result.filter((run) => (run.head_commit!.id === latestCommitId || run.status !== 'completed'));
 
     return runsForCommit.map(
@@ -69,6 +75,7 @@ export class GithubWorkflowService {
           updatedAt: run.updated_at,
           status: this.getStatusForWorkflow(run),
           branch: run.head_branch,
+          event: run.event,
           actor: run.triggering_actor?.login ?? run.triggering_actor?.email ?? 'K/A'
         };
       }

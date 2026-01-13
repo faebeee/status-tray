@@ -1,16 +1,21 @@
-import { Repository } from '../components/repository.tsx';
+import { GitRepository } from "../components/github/git-repository";
+import { VercelProject } from "../components/vercel/vercel-project";
 
-export const Dashboard = () => {
+export const Dashboard = ({ gitRepos, vercelProjects }: { gitRepos: string[], vercelProjects: 	string[]}) => {
+  const repos:[string, string] = gitRepos.map(repo => repo.split('/')) as unknown as [string, string];
+
   return (
     <box padding={2}>
       <scrollbox focused>
         <box alignSelf="center" marginBottom={2}>
-          <ascii-font text={'Github Actions'}/>
+          <ascii-font text={'Workflows'}/>
         </box>
 
-        <Repository owner={'konova-ag'} repo={'emi-app'}/>
-        <Repository owner={'konova-ag'} repo={'emi-api'}/>
-        <Repository owner={'faebeee'} repo={'storybook-utils'}/>
+        {repos.map(([owner, repo]) => (
+          <GitRepository key={`${owner}/${repo}`} owner={owner!} repo={repo!}/>
+        ))}
+
+        {vercelProjects.map((project) => (<VercelProject key={project} projectName={project} />))}
       </scrollbox>
     </box>
   );

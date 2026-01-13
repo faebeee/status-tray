@@ -5,6 +5,7 @@ import { getStatusColor } from '../utils/get-status-color.ts';
 
 export type RepositoryActionProps = {
   status: WorkflowStatus;
+  project?: string;
   title: string
   description: string;
   branch?: string;
@@ -14,17 +15,15 @@ export type RepositoryActionProps = {
   url?: string;
 }
 
-export const RepositoryAction = ({ status,event, url, title, description, branch, createdAt, actor }: RepositoryActionProps) => {
+export const MinimalRepositoryAction = ({ status, project, event, url, title, description, branch, createdAt, actor }: RepositoryActionProps) => {
   return <box title={title}>
     <box width={2} backgroundColor={getStatusColor(status)}></box>
     <box marginLeft={3} flexGrow={1}>
-      <box backgroundColor={status === WorkflowStatus.failure ? COLORS.failure : undefined}>
-        <text attributes={TextAttributes.BOLD} font-size={3}>{title}</text>
+      <box>
+        <text attributes={TextAttributes.BOLD} font-size={3}>{project} :: {title}</text>
       </box>
-      {url && <text fg={"#349beb"}>{url}</text>}
-      <text attributes={TextAttributes.DIM}>{description}</text>
-      {createdAt && <text marginTop={1} attributes={TextAttributes.DIM}>{new Date(createdAt).toLocaleString()}</text>}
       <box flexDirection='row' gap={2}>
+        {createdAt && <text attributes={TextAttributes.DIM}>{new Date(createdAt).toLocaleString()}</text>}
         {actor && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Actor</span> {actor}</text>}
         {branch && <text bg={COLORS.neutral}><span  attributes={TextAttributes.BOLD}>Branch</span> {branch}</text>}
         {event && <text bg={COLORS.neutral}><span  attributes={TextAttributes.BOLD}>Event</span> {event}</text>}

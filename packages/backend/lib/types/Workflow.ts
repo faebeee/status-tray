@@ -1,7 +1,7 @@
 import { WorkflowStatus } from './WorkflowStatus';
 
 export type Workflow = {
-  id: number;
+  id: number|string;
   title: string;
   description: string;
   uri?: string;
@@ -9,4 +9,6 @@ export type Workflow = {
   updatedAt: string;
   status: WorkflowStatus;
   branch?: string;
+  event?: string;
+  actor?: string;
 }

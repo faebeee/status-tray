@@ -5,6 +5,10 @@
   "bin": {
     "status-tray-tui": "./dist/cli"
   },
+  "homepage": "https://github.com/faebeee/status-tray/tree/main/apps/status-tray-tui",
+  "author": {
+    "name": "faebeee"
+  },
   "scripts": {
     "dev": "bun run --watch src/index.tsx",
     "build": "bun build src/cli.ts --compile --outfile ./dist/cli"

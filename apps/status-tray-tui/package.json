@@ -1,6 +1,7 @@
 {
   "name": "status-tray-tui",
   "module": "src/index.tsx",
+  "description": "A TUI for monitoring project statuses from various services like GitHub and Vercel.",
   "type": "module",
   "bin": {
     "status-tray-tui": "./dist/cli"
@@ -20,7 +21,8 @@
   ],
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/react": "^19.2.3"
+    "@types/react": "^19.2.3",
+    "@repo/backend": "*"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -29,7 +31,6 @@
     "@opentui/core": "^0.1.69",
     "@opentui/react": "^0.1.69",
     "react": "^19.2.3",
-    "@repo/backend": "*",
     "@octokit/auth-oauth-device": "^2.0.0",
     "node-notifier": "^10.0.1",
     "yargs": "^18.0.0"

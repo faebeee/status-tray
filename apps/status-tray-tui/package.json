@@ -2,7 +2,6 @@
   "name": "status-tray-tui",
   "module": "src/index.tsx",
   "type": "module",
-  "private": true,
   "bin": {
     "status-tray-tui": "./dist/cli"
   },
@@ -10,6 +9,11 @@
     "dev": "bun run --watch src/index.tsx",
     "build": "bun build src/cli.ts --compile --outfile ./dist/cli"
   },
+  "files": [
+    "./dist",
+    "./doc",
+    "./README.md"
+  ],
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19.2.3"

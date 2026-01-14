@@ -2,8 +2,8 @@
 
 A terminal-based UI to display project statuses from various sources like GitHub and Vercel. This tool provides a unified dashboard to monitor the status of all your projects in an elegant terminal interface.
 
-![Default](./doc/default.png)
-![Minimal](./doc/minimal.png)
+![Default](https://github.com/faebeee/status-tray/blob/main/apps/status-tray-tui/doc/default.png)
+![Minimal](https://github.com/faebeee/status-tray/blob/main/apps/status-tray-tui/doc/minimal.png)
 
 ## Features
 

@@ -32,6 +32,7 @@ renderer.keyInput.on('keypress', (key: KeyEvent) => {
 
 const argv = yargs(hideBin(process.argv)).parse()
 const vercelProjects = argv.vercel ? (Array.isArray(argv.vercel) ? argv.vercel : [argv.vercel]) : [];
+const githubProjects = argv.git ? (Array.isArray(argv.git) ? argv.git : [argv.git]) : [];
 const minimal = argv.minimal ?? false;
 
-createRoot(renderer).render(<App minimal={minimal} gitRepos={argv.git ?? []} vercelProjects={vercelProjects} />);
+createRoot(renderer).render(<App minimal={minimal} gitRepos={githubProjects} vercelProjects={vercelProjects} />);

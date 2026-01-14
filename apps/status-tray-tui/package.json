@@ -3,12 +3,16 @@
   "module": "src/index.tsx",
   "type": "module",
   "private": true,
+  "bin": {
+    "status-tray-tui": "./dist/cli"
+  },
   "scripts": {
-    "dev": "bun run --watch src/index.tsx"
+    "dev": "bun run --watch src/index.tsx",
+    "build": "bun build src/cli.ts --compile --outfile ./dist/cli"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/react":"^19.2.3"
+    "@types/react": "^19.2.3"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -19,7 +23,7 @@
     "react": "^19.2.3",
     "@repo/backend": "*",
     "@octokit/auth-oauth-device": "^2.0.0",
-    "node-notifier":"^10.0.1",
-    "yargs":"^18.0.0"
+    "node-notifier": "^10.0.1",
+    "yargs": "^18.0.0"
   }
 }

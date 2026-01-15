@@ -35,5 +35,5 @@
     "node-notifier": "^10.0.1",
     "yargs": "^18.0.0"
   },
-  "version": "1.0.3"
+  "version": "1.0.4"
 }

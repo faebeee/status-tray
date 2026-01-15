@@ -25,9 +25,10 @@ export const MinimalRepositoryAction = ({ status, project, event, url, title, de
       <box flexDirection='row' gap={2}>
         {createdAt && <text attributes={TextAttributes.DIM}>{new Date(createdAt).toLocaleString()}</text>}
         {actor && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Actor</span> {actor}</text>}
-        {branch && <text bg={COLORS.neutral}><span  attributes={TextAttributes.BOLD}>Branch</span> {branch}</text>}
-        {event && <text bg={COLORS.neutral}><span  attributes={TextAttributes.BOLD}>Event</span> {event}</text>}
+        {branch && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Branch</span> {branch}</text>}
+        {event && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Event</span> {event}</text>}
       </box>
+      {url && <text>{url}</text>}
     </box>
   </box>;
 };

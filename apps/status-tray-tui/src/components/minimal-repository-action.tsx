@@ -28,7 +28,7 @@ export const MinimalRepositoryAction = ({ status, project, event, url, title, de
         {branch && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Branch</span> {branch}</text>}
         {event && <text bg={COLORS.neutral}><span attributes={TextAttributes.BOLD}>Event</span> {event}</text>}
       </box>
-      {url && <text>{url}</text>}
+      {url && <text fg={COLORS.info}>{url}</text>}
     </box>
   </box>;
 };

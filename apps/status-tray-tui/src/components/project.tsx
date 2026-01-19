@@ -2,14 +2,30 @@ import type { Workflow } from "@repo/backend/lib/types/Workflow";
 import { WorkflowStatus } from "@repo/backend/lib/types/WorkflowStatus";
 import { useViewContext } from "../context/view-context";
 import { RepositoryAction } from "./repository-action";
+import { ProjectHistory } from "./project-history";
+import type { Service } from "@repo/backend/lib/Service";
+import { useEffect, useState } from "react";
 
 export type ProjectProps = {
   title: string;
-  workflows: Workflow[]
+  service: Service;
 }
 
-export const Project = ({ title, workflows }: ProjectProps) => {
+export const Project = ({ title, service }: ProjectProps) => {
   const viewContext = useViewContext();
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [workflowHistory, setHistory] = useState<Workflow[]>([]);
+
+  const loadWorkflows = async () => {
+    const loadedWorkflows = await service.getWorkflowsForLatestCommit();
+    const loadedWorkflowHistory = await service.getHistory();
+    setWorkflows(loadedWorkflows);
+    setHistory(loadedWorkflowHistory);
+  }
+
+  useEffect(() => {
+    loadWorkflows();
+  }, [])
 
   if (viewContext.showOnlyFailed && workflows.every(w => [WorkflowStatus.success].includes(w.status))) {
     return null;
@@ -32,6 +48,10 @@ export const Project = ({ title, workflows }: ProjectProps) => {
             url={run.uri}
           />
         ))}
+      </box>
+
+      <box marginTop={1}>
+        <ProjectHistory workflows={workflowHistory} />
       </box>
     </box>
   </box>;

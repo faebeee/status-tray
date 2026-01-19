@@ -2,6 +2,7 @@ import type { RestEndpointMethodTypes } from '@octokit/rest';
 import { Workflow } from '../types/Workflow';
 import { WorkflowStatus } from '../types/WorkflowStatus';
 import { OctokitService } from './OctokitService';
+import { Service } from '../Service';
 
 type RepoWorkflowRun = RestEndpointMethodTypes['actions']['listWorkflowRunsForRepo']['response']['data']['workflow_runs'][0]
 type WorkflowConclusion =
@@ -20,25 +21,29 @@ type WorkflowConclusion =
   | 'waiting'
   | 'pending';
 
-export class GithubWorkflowService {
+export class GithubWorkflowService implements Service {
   private api: OctokitService;
+  private owner: string;
+  private repo: string;
 
-  constructor() {
+  constructor(owner: string, repo: string) {
     this.api = new OctokitService();
+    this.owner = owner;
+    this.repo = repo;
   }
 
-  private async getListOfWorkflows(owner: string, repo: string): Promise<RepoWorkflowRun[]> {
+  private async getListOfWorkflows(): Promise<RepoWorkflowRun[]> {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const { data } = await this.api.getApi().rest.actions.listWorkflowRunsForRepo({
-      owner,
-      repo
+      owner: this.owner,
+      repo: this.repo
     });
 
     return data.workflow_runs;
   }
 
-  public getStatusForWorkflow(run: RepoWorkflowRun) {
+  private getStatusForWorkflow(run: RepoWorkflowRun) {
     if (['in_progress', 'queued', 'requested', 'waiting', 'pending'].includes(run.conclusion as WorkflowConclusion)) {
       return WorkflowStatus.running;
     }
@@ -55,8 +60,12 @@ export class GithubWorkflowService {
     return WorkflowStatus.unknown;
   }
 
-  public async getWorkflowRunsForRepo(owner: string, repo: string): Promise<Workflow[]> {
-    const result = await this.getListOfWorkflows(owner, repo);
+  public async getWorkflowsForLatestCommit(): Promise<Workflow[]> {
+    const result = await this.getListOfWorkflows();
+    if (!result[0]) {
+      return [];
+    }
+
     const latestCommitId = result[0].head_commit?.id;
     if (!latestCommitId) {
       return [];
@@ -66,6 +75,31 @@ export class GithubWorkflowService {
     return runsForCommit.map(
       (run) => {
 
+        return {
+          id: run.id,
+          title: run.name ?? 'K/A',
+          description: run.display_title ?? 'K/A',
+          uri: run.html_url,
+          createdAt: run.created_at,
+          updatedAt: run.updated_at,
+          status: this.getStatusForWorkflow(run),
+          branch: run.head_branch,
+          event: run.event,
+          actor: run.triggering_actor?.login ?? run.triggering_actor?.email ?? 'K/A'
+        };
+      }
+    );
+  }
+
+  public async getHistory(): Promise<Workflow[]> {
+    const workflows = await this.getListOfWorkflows();
+
+    if (!workflows) {
+      return [];
+    }
+
+    return workflows.map(
+      (run) => {
         return {
           id: run.id,
           title: run.name ?? 'K/A',

@@ -10,9 +10,14 @@ export class VercelWorkflowService implements Service {
   }
 
   getStatus(readyState: string) {
+    console.log(readyState);
     switch (readyState) {
       case 'ERROR':
         return WorkflowStatus.failure
+      case 'READY':
+        return WorkflowStatus.success
+      case 'BUILDING':
+        return WorkflowStatus.running;
       default:
         return WorkflowStatus.running
     }
@@ -36,6 +41,18 @@ export class VercelWorkflowService implements Service {
   }
 
   async getHistory(): Promise<Workflow[]> {
-    return [];
+    const response = await fetch(`https://api.vercel.com/v6/deployments`, this.options);
+    const data = await response.json();
+    return data.deployments.map((deployment) => {
+      return {
+        id: deployment.uid,
+        title: deployment.name,
+        createdAt: new Date(deployment.createdAt).toISOString(),
+        actor: deployment.creator.username,
+        status: this.getStatus(deployment.state),
+        branch: deployment.target,
+        uri: deployment.inspectorUrl
+      };
+    });
   }
 }

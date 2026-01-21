@@ -5,6 +5,7 @@ import { RepositoryAction } from "./repository-action";
 import { ProjectHistory } from "./project-history";
 import type { Service } from "@repo/backend/lib/Service";
 import { useEffect, useState } from "react";
+import { useKeyboard } from "@opentui/react";
 
 export type ProjectProps = {
   title: string;
@@ -17,22 +18,40 @@ export const Project = ({ title, service }: ProjectProps) => {
   const [workflowHistory, setHistory] = useState<Workflow[]>([]);
 
   const loadWorkflows = async () => {
-    const loadedWorkflows = await service.getWorkflowsForLatestCommit();
-    const loadedWorkflowHistory = await service.getHistory();
+    const [loadedWorkflows, loadedWorkflowHistory] = await Promise.all([
+      service.getWorkflowsForLatestCommit(),
+      service.getHistory()
+    ]);
     setWorkflows(loadedWorkflows);
     setHistory(loadedWorkflowHistory);
   }
 
+  useKeyboard((key) => {
+    if (key.name === 'r') {
+      loadWorkflows();
+    }
+  })
+
   useEffect(() => {
+    const i = setInterval(loadWorkflows, 1000 * 60);
     loadWorkflows();
-  }, [])
+
+    return () => {
+      clearInterval(i);
+    };
+  }, []);
 
   if (viewContext.showOnlyFailed && workflows.every(w => [WorkflowStatus.success].includes(w.status))) {
     return null;
   }
 
   return <box justifyContent="center" alignItems="flex-start" border padding={1}>
-    <text>{title}</text>
+
+    <box flexDirection="column" gap={1} justifyContent={'space-between'}>
+      <text>{title}</text>
+      <ProjectHistory workflows={workflowHistory} />
+    </box>
+
     <box paddingLeft={2} marginTop={1}>
       <box gap={1} title={'Runs'}>
         {workflows.map((run: Workflow) => (
@@ -48,10 +67,6 @@ export const Project = ({ title, service }: ProjectProps) => {
             url={run.uri}
           />
         ))}
-      </box>
-
-      <box marginTop={1}>
-        <ProjectHistory workflows={workflowHistory} />
       </box>
     </box>
   </box>;

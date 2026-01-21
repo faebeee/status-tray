@@ -16,10 +16,10 @@ export const Dashboard = ({ gitRepos, vercelProjects }: { gitRepos: string[], ve
 
         {repos.map(([owner, repo]) => (
           //<GitRepository key={`${owner}/${repo}`} owner={owner!} repo={repo!} />
-          <Project key={`${owner}/${repo}`} service={new GithubWorkflowService(owner!, repo!)} />
+          <Project key={`${owner}/${repo}`} service={new GithubWorkflowService(owner!, repo!)} title={`${owner}/${repo}`} />
         ))}
 
-        {vercelProjects.map((project) => (<Project key={project} service={new VercelWorkflowService(project)} />))}
+        {vercelProjects.map((project) => (<Project key={project} service={new VercelWorkflowService(project)} title={project} />))}
       </scrollbox>
     </box>
   );

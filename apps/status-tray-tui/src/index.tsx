@@ -6,6 +6,7 @@ import { hideBin } from 'yargs/helpers';
 import { ViewContext } from './context/view-context.ts';
 import { Dashboard } from './views/dashboard.tsx';
 import { Minimal } from './views/minimal.tsx';
+import { DashboardMinimal } from './views/dashboard-minimal.tsx';
 
 const renderer = await createCliRenderer();
 
@@ -19,7 +20,7 @@ function App({ gitRepos, vercelProjects, minimal }: { minimal: boolean, gitRepos
   });
 
   return (<ViewContext.Provider value={{ showOnlyFailed, toggle: () => setShowOnlyFailed(!showOnlyFailed) }}>
-    {minimal ? <Minimal gitRepos={gitRepos} vercelProjects={vercelProjects} />
+    {minimal ? <DashboardMinimal gitRepos={gitRepos} vercelProjects={vercelProjects} />
       : <Dashboard gitRepos={gitRepos} vercelProjects={vercelProjects} />}
   </ViewContext.Provider>);
 }

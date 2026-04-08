@@ -20,9 +20,10 @@
     "./README.md"
   ],
   "devDependencies": {
+    "@repo/backend": "*",
     "@types/bun": "latest",
     "@types/react": "^19.2.3",
-    "@repo/backend": "*"
+    "@types/yargs": "^17.0.35"
   },
   "peerDependencies": {
     "typescript": "^5"

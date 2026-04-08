@@ -1,118 +1,146 @@
-import type { RestEndpointMethodTypes } from '@octokit/rest';
-import { Workflow } from '../types/Workflow';
-import { WorkflowStatus } from '../types/WorkflowStatus';
-import { OctokitService } from './OctokitService';
-import { Service } from '../Service';
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import type { Workflow } from "../types/Workflow";
+import type { Service } from "../Service";
+import { WorkflowStatus } from "../types/WorkflowStatus";
 
-type RepoWorkflowRun = RestEndpointMethodTypes['actions']['listWorkflowRunsForRepo']['response']['data']['workflow_runs'][0]
-type WorkflowConclusion =
-  'completed'
-  | 'action_required'
-  | 'cancelled'
-  | 'failure'
-  | 'neutral'
-  | 'skipped'
-  | 'stale'
-  | 'success'
-  | 'timed_out'
-  | 'in_progress'
-  | 'queued'
-  | 'requested'
-  | 'waiting'
-  | 'pending';
+const execFileAsync = promisify(execFile);
+
+type WorkflowRunStatus =
+  | "completed"
+  | "in_progress"
+  | "queued"
+  | "requested"
+  | "waiting"
+  | "pending";
+
+type WorkflowRunConclusion =
+  | "action_required"
+  | "cancelled"
+  | "failure"
+  | "neutral"
+  | "skipped"
+  | "stale"
+  | "success"
+  | "timed_out"
+  | null;
+
+type WorkflowRun = {
+  id: number;
+  name: string | null;
+  display_title: string | null;
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  status: WorkflowRunStatus;
+  conclusion: WorkflowRunConclusion;
+  head_branch: string | null;
+  event: string;
+  triggering_actor: { login: string; email?: string } | null;
+  head_commit: { id: string } | null;
+};
+
+const ACTIVE_STATUSES: WorkflowRunStatus[] = [
+  "in_progress",
+  "queued",
+  "requested",
+  "waiting",
+  "pending",
+];
+
+const SUCCESS_CONCLUSIONS: WorkflowRunConclusion[] = ["success", "cancelled"];
+
+const FAILURE_CONCLUSIONS: WorkflowRunConclusion[] = [
+  "action_required",
+  "failure",
+  "neutral",
+  "skipped",
+  "stale",
+  "timed_out",
+];
+
+// Selects only the fields we need to keep the response payload small.
+const JQ_FILTER = [
+  ".workflow_runs[] | {",
+  "  id, name, display_title, html_url, created_at, updated_at,",
+  "  status, conclusion, head_branch, event,",
+  "  triggering_actor: { login: .triggering_actor.login, email: .triggering_actor.email },",
+  "  head_commit: { id: .head_commit.id }",
+  "}",
+].join("\n");
 
 export class GithubWorkflowService implements Service {
-  private api: OctokitService;
-  private owner: string;
-  private repo: string;
+  constructor(
+    private readonly owner: string,
+    private readonly repo: string,
+  ) {}
 
-  constructor(owner: string, repo: string) {
-    this.api = new OctokitService();
-    this.owner = owner;
-    this.repo = repo;
+  private async fetchRuns(): Promise<WorkflowRun[]> {
+    const { stdout } = await execFileAsync("gh", [
+      "api",
+      `repos/${this.owner}/${this.repo}/actions/runs`,
+      "--jq",
+      JQ_FILTER,
+    ]);
+
+    return stdout
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as WorkflowRun);
   }
 
-  private async getListOfWorkflows(): Promise<RepoWorkflowRun[]> {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const { data } = await this.api.getApi().rest.actions.listWorkflowRunsForRepo({
-      owner: this.owner,
-      repo: this.repo
-    });
-
-    return data.workflow_runs;
-  }
-
-  private getStatusForWorkflow(run: RepoWorkflowRun) {
-    if (['in_progress', 'queued', 'requested', 'waiting', 'pending'].includes(run.conclusion as WorkflowConclusion)) {
+  private mapStatus(run: WorkflowRun): WorkflowStatus {
+    if (ACTIVE_STATUSES.includes(run.status)) {
       return WorkflowStatus.running;
     }
 
-    if (['completed', 'cancelled', 'success'].includes(run.conclusion as WorkflowConclusion)) {
-      return WorkflowStatus.success;
+    if (run.status === "completed") {
+      if (SUCCESS_CONCLUSIONS.includes(run.conclusion)) {
+        return WorkflowStatus.success;
+      }
+      if (FAILURE_CONCLUSIONS.includes(run.conclusion)) {
+        return WorkflowStatus.failure;
+      }
     }
 
-    if (['timed_out', 'skipped', 'failure', 'action_required'].includes(run.conclusion as WorkflowConclusion)) {
-      return WorkflowStatus.failure;
-    }
-
-    //throw new Error(run.conclusion);
     return WorkflowStatus.unknown;
   }
 
-  public async getWorkflowsForLatestCommit(): Promise<Workflow[]> {
-    const result = await this.getListOfWorkflows();
-    if (!result[0]) {
-      return [];
-    }
+  private mapRun(run: WorkflowRun): Workflow {
+    return {
+      id: run.id,
+      title: run.name ?? "N/A",
+      description: run.display_title ?? "N/A",
+      uri: run.html_url,
+      createdAt: run.created_at,
+      updatedAt: run.updated_at,
+      status: this.mapStatus(run),
+      branch: run.head_branch ?? undefined,
+      event: run.event,
+      actor:
+        run.triggering_actor?.login ?? run.triggering_actor?.email ?? "N/A",
+    };
+  }
 
-    const latestCommitId = result[0].head_commit?.id;
+  async getWorkflowsForLatestCommit(): Promise<Workflow[]> {
+    const runs = await this.fetchRuns();
+    const latestCommitId = runs[0]?.head_commit?.id;
+
     if (!latestCommitId) {
       return [];
     }
-    const runsForCommit = result.filter((run) => (run.head_commit!.id === latestCommitId || run.status !== 'completed'));
 
-    return runsForCommit.map(
-      (run) => {
-
-        return {
-          id: run.id,
-          title: run.name ?? 'K/A',
-          description: run.display_title ?? 'K/A',
-          uri: run.html_url,
-          createdAt: run.created_at,
-          updatedAt: run.updated_at,
-          status: this.getStatusForWorkflow(run),
-          branch: run.head_branch,
-          event: run.event,
-          actor: run.triggering_actor?.login ?? run.triggering_actor?.email ?? 'K/A'
-        };
-      }
-    );
+    return runs
+      .filter(
+        (run) =>
+          run.head_commit?.id === latestCommitId || run.status !== "completed",
+      )
+      .map((run) => this.mapRun(run));
   }
 
-  public async getHistory(): Promise<Workflow[]> {
-    const workflows = await this.getListOfWorkflows();
-
-    if (!workflows) {
-      return [];
-    }
-
-    return workflows.map(
-      (run) => {
-        return {
-          id: run.id,
-          title: run.name ?? 'K/A',
-          description: run.display_title ?? 'K/A',
-          uri: run.html_url,
-          createdAt: run.created_at,
-          updatedAt: run.updated_at,
-          status: this.getStatusForWorkflow(run),
-          branch: run.head_branch,
-          event: run.event,
-          actor: run.triggering_actor?.login ?? run.triggering_actor?.email ?? 'K/A'
-        };
-      }
-    );
+  async getHistory(): Promise<Workflow[]> {
+    const runs = await this.fetchRuns();
+    return runs.map((run) => this.mapRun(run));
   }
 }

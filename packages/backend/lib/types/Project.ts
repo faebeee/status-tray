@@ -1,8 +1,8 @@
-import { Workflow } from './Workflow';
+import type { Workflow } from "./Workflow";
 
 export type Project = {
   name: string;
   workflows: Workflow[];
   uri?: string;
-  type: 'github' | 'vercel';
-}
+  type: "github" | "vercel";
+};

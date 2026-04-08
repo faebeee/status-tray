@@ -1,10 +1,7 @@
 {
   "name": "@repo/backend",
-  "dependencies": {
-    "keytar": "^7.9.0",
-    "@octokit/rest": "^22.0.1"
-  },
   "devDependencies": {
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "@types/node": "*"
   }
 }

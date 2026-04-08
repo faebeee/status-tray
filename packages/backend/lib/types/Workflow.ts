@@ -1,7 +1,7 @@
-import { WorkflowStatus } from './WorkflowStatus';
+import type { WorkflowStatus } from "./WorkflowStatus";
 
 export type Workflow = {
-  id: number|string;
+  id: number | string;
   title: string;
   description: string;
   uri?: string;
@@ -11,4 +11,4 @@ export type Workflow = {
   branch?: string;
   event?: string;
   actor?: string;
-}
+};

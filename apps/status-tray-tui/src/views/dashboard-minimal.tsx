@@ -1,4 +1,3 @@
-import { version } from "../../package.json";
 import { GithubWorkflowService } from "@repo/backend/lib/github/GithubWorkflowService";
 import { VercelWorkflowService } from "@repo/backend/lib/vercel/VercelWorkflowService";
 import { MinimalProject } from "../components/minimal-project";
@@ -15,7 +14,6 @@ export const DashboardMinimal = ({
   <box padding={2}>
     <scrollbox focused>
       <box alignSelf="center" marginBottom={2}>
-        <text>{version}</text>
         <ascii-font text="Workflows" />
       </box>
 

@@ -1,32 +1,34 @@
 import type { Service } from "../Service";
 import type { Workflow } from "../types/Workflow";
 import { WorkflowStatus } from "../types/WorkflowStatus";
+import { execa } from "execa";
 
 type VercelReadyState = "ERROR" | "READY" | "BUILDING" | string;
 
 type VercelDeployment = {
-  id: string;
-  uid: string;
+  url: string;
   name: string;
+  state: string;
+  target: null | string;
   createdAt: number;
-  readyState: VercelReadyState;
-  state: VercelReadyState;
-  creator: { username: string };
-  meta: { githubCommitMessage: string; githubCommitRef: string };
-  oidcTokenClaims: { aud: string };
-  target: string;
-  inspectorUrl: string;
+  buildingAt: number;
+  ready: number;
+  creator: {
+    uid: string;
+    username: string;
+  },
+  meta: {
+    githubCommitAuthorName: string;
+    githubCommitMessage: string;
+    githubCommitSha: string;
+  }
 };
 
 const VERCEL_API = "https://api.vercel.com";
 
 export class VercelWorkflowService implements Service {
-  private readonly headers: Record<string, string>;
 
   constructor(private readonly name: string) {
-    this.headers = {
-      Authorization: `Bearer ${process.env.VERCEL_BEARER}`,
-    };
   }
 
   private mapReadyState(state: VercelReadyState): WorkflowStatus {
@@ -41,44 +43,36 @@ export class VercelWorkflowService implements Service {
   }
 
   async getWorkflowsForLatestCommit(): Promise<Workflow[]> {
-    const response = await fetch(`${VERCEL_API}/v9/projects/${this.name}`, {
-      method: "GET",
-      headers: this.headers,
-    });
-    const data = (await response.json()) as {
-      latestDeployments: VercelDeployment[];
-    };
+    const response = await execa('vercel', ['ls', this.name, '-F', 'json']);
+    const { deployments } = JSON.parse(response.stdout) as { deployments: VercelDeployment[] };
 
-    return data.latestDeployments.map((deployment) => ({
-      id: deployment.id,
-      title: deployment.name,
-      description: deployment.meta.githubCommitMessage,
-      createdAt: new Date(deployment.createdAt).toISOString(),
-      updatedAt: new Date(deployment.createdAt).toISOString(),
-      actor: deployment.creator.username,
-      status: this.mapReadyState(deployment.readyState),
-      branch: deployment.meta.githubCommitRef,
-      uri: deployment.oidcTokenClaims.aud,
-    }));
-  }
-
-  async getHistory(): Promise<Workflow[]> {
-    const response = await fetch(`${VERCEL_API}/v6/deployments`, {
-      method: "GET",
-      headers: this.headers,
-    });
-    const data = (await response.json()) as { deployments: VercelDeployment[] };
-
-    return data.deployments.map((deployment) => ({
-      id: deployment.uid,
-      title: deployment.name,
+    return deployments.slice(0, 1).map((deployment) => ({
+      id: deployment.meta.githubCommitSha,
+      title: deployment.meta.githubCommitMessage,
       description: "",
+      uri: deployment.url,
       createdAt: new Date(deployment.createdAt).toISOString(),
       updatedAt: new Date(deployment.createdAt).toISOString(),
       actor: deployment.creator.username,
       status: this.mapReadyState(deployment.state),
       branch: deployment.target,
-      uri: deployment.inspectorUrl,
+    }));
+  }
+
+  async getHistory(): Promise<Workflow[]> {
+    const response = await execa('vercel', ['ls', this.name, '-F', 'json']);
+    const { deployments } = JSON.parse(response.stdout) as { deployments: VercelDeployment[] };
+
+    return deployments.map((deployment) => ({
+      id: deployment.meta.githubCommitSha,
+      title: deployment.meta.githubCommitMessage,
+      description: "",
+      uri: deployment.url,
+      createdAt: new Date(deployment.createdAt).toISOString(),
+      updatedAt: new Date(deployment.createdAt).toISOString(),
+      actor: deployment.creator.username,
+      status: this.mapReadyState(deployment.state),
+      branch: deployment.target,
     }));
   }
 }

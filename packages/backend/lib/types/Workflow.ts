@@ -8,7 +8,7 @@ export type Workflow = {
   createdAt: string;
   updatedAt: string;
   status: WorkflowStatus;
-  branch?: string;
+  branch?: string | null;
   event?: string;
   actor?: string;
 };

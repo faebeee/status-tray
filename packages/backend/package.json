@@ -3,5 +3,8 @@
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@types/node": "*"
+  },
+  "dependencies": {
+    "execa": "^9.6.1"
   }
 }

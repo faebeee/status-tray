@@ -1,3 +1,4 @@
+import { version } from "../../package.json";
 import { GithubWorkflowService } from "@repo/backend/lib/github/GithubWorkflowService";
 import { VercelWorkflowService } from "@repo/backend/lib/vercel/VercelWorkflowService";
 import { Project } from "../components/project";
@@ -11,6 +12,7 @@ export const Dashboard = ({ gitRepos, vercelProjects }: DashboardProps) => (
   <box padding={2}>
     <scrollbox focused>
       <box alignSelf="center" marginBottom={2}>
+        <text>{version}</text>
         <ascii-font text="Workflows" />
       </box>
 
